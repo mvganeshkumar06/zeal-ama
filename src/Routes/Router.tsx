@@ -1,6 +1,7 @@
 import { BrowserRouter, Switch, Route } from "react-router-dom";
 import { Home, Session } from "../pages/index";
 import { Header, Navigation } from "../components/index";
+import PrivateRoute from "./PrivateRoute";
 
 const Routes = () => {
     return (
@@ -8,9 +9,9 @@ const Routes = () => {
             <Header />
             <Navigation />
             <Switch>
-                <Route path="/join/:sessionId">
+                <PrivateRoute path="/join/:sessionId">
                     <Session />
-                </Route>
+                </PrivateRoute>
                 <Route path="/">
                     <Home />
                 </Route>

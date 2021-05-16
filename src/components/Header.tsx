@@ -7,12 +7,17 @@ import {
 import Brightness4Icon from "@material-ui/icons/Brightness4";
 import HomeIcon from "@material-ui/icons/Home";
 import { Link } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
+import PersonIcon from "@material-ui/icons/Person";
+import { useEffect } from "react";
+import useSessionContext from "../hooks/useSessionContext";
 
 const Header = () => {
     const style = useStyleContext();
     const { theme, toggleTheme } = useThemeContext();
 
     const styles = `
+        width:100%;
         height: 4rem;
         position: fixed;
         top: 0;
@@ -87,6 +92,28 @@ const Header = () => {
         }
     `;
 
+    const { loginWithRedirect, logout, user } = useAuth0();
+
+    const { dispatch } = useSessionContext();
+
+    useEffect(() => {
+        const savedUserName = localStorage.getItem("userName");
+        if (savedUserName) {
+            dispatch({
+                type: "SET_USERNAME",
+                payload: savedUserName,
+            });
+        } else {
+            if (user && user.name) {
+                dispatch({
+                    type: "SET_USERNAME",
+                    payload: user.name as string,
+                });
+                localStorage.setItem("userName", user.name as string);
+            }
+        }
+    }, [user, dispatch]);
+
     return (
         <Container
             type="row"
@@ -96,7 +123,7 @@ const Header = () => {
             customStyles={styles}
         >
             <Container type="row" rowCenter colCenter>
-                <a href="https://zeal-ama.netlify.app/" className="zealAmaLink">
+                <a href="https://zeal-ama.netlify.app/">
                     <Text>Icon here</Text>
                 </a>
                 <Text className="title">Zeal AMA</Text>
@@ -117,6 +144,30 @@ const Header = () => {
                         <Text className="iconText">Home</Text>
                     </Container>
                 </Link>
+                {user ? (
+                    <Container
+                        type="col"
+                        rowCenter
+                        className="iconItem"
+                        onClick={() => {
+                            localStorage.removeItem("userName");
+                            logout({ returnTo: window.location.origin });
+                        }}
+                    >
+                        <PersonIcon className="icon" />
+                        <Text className="iconText">Logout</Text>
+                    </Container>
+                ) : (
+                    <Container
+                        type="col"
+                        rowCenter
+                        className="iconItem"
+                        onClick={loginWithRedirect}
+                    >
+                        <PersonIcon className="icon" />
+                        <Text className="iconText">Login</Text>
+                    </Container>
+                )}
             </Container>
         </Container>
     );

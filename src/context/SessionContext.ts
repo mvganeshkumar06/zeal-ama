@@ -1,14 +1,5 @@
-import React, { createContext } from "react";
+import { createContext } from "react";
+import { SessionContextType } from "../types/index";
 
-export type SessionStateType = {
-    sessionId: string;
-    sessionName: string;
-    hostName: string;
-};
-
-export type SessionContextType ={
-    state:SessionStateType,
-    dispatch:React.Dispatch<any>,
-}
-
-export const SessionContext = createContext<SessionContextType | null>(null);
+export const SessionContext =
+    createContext<SessionContextType | undefined>(undefined);

@@ -45,6 +45,26 @@ const Session = () => {
     const [isHost, setIsHost] = useState(false);
     const [hostIdentified, setHostIdentified] = useState(false);
 
+    // Peer connection config
+    const config = {
+        iceServers: [
+            {
+                urls: [
+                    "stun:stun1.l.google.com:19302",
+                    "stun:stun2.l.google.com:19302",
+                ],
+            },
+        ],
+    };
+
+    // Create a peer connection for host
+    const peer = new RTCPeerConnection(config);
+
+    // Connect the socket to the server
+    const socket = io("https://zeal-ama.herokuapp.com");
+
+    const [userSocketId, setUserSocketId] = useState("");
+
     // Fetch session details after getting the sessionId
     useEffect(() => {
         const fetchSessionDetails = async () => {
@@ -78,7 +98,7 @@ const Session = () => {
                 console.log("Welcome host");
                 setIsHost(true);
             } else {
-                console.log("Welcome participant");
+                console.log("Welcome user");
             }
             setHostIdentified(true);
         }
@@ -88,100 +108,108 @@ const Session = () => {
     useEffect(() => {
         if (hostIdentified) {
             if (isHost) {
+                // Set participants in local storage
                 localStorage.setItem(
                     "participants_active_in_session",
                     JSON.stringify([])
                 );
-                startHostStream();
-                createSessionConnection();
+                // When host socket is connected
+                socket.on("connect", () => {
+                    // Indicate the server that the host joined the session
+                    socket.emit(
+                        "host-join-session",
+                        sessionId,
+                        socket.id,
+                        userName
+                    );
+                    console.log("Host joined session");
+                });
             } else {
+                // Set participants in local storage
                 localStorage.setItem(
                     "participants_active_in_session",
                     JSON.stringify([userName])
                 );
+                // When host socket is connected
+                socket.on("connect", () => {
+                    // Indicate the host (through server) that the user has joined the session
+                    socket.emit("join-session", sessionId, socket.id, userName);
+                    console.log("Participant joined the session");
+                    setUserSocketId(socket.id);
+                });
+
                 joinSession();
             }
         }
         // eslint-disable-next-line
     }, [hostIdentified]);
 
-    const createSessionConnection = async () => {
-        // Connect the socket to the server
-        // const socket = io("https://zeal-ama.herokuapp.com");
-        const socket = io("http://localhost:5000");
-
-        socket.emit("host-join-session", sessionId, socket.id, userName);
-
-        console.log("Host joined session");
-
-        // Peer connection config
-        const config = {
-            iceServers: [
-                {
-                    urls: [
-                        "stun:stun1.l.google.com:19302",
-                        "stun:stun2.l.google.com:19302",
-                    ],
-                },
-            ],
-        };
-
-        // Create a peer connection for host
-        const peer = new RTCPeerConnection(config);
-
-        // Add the host track to the peer connection
-        hostStream.getTracks().forEach((track) => {
-            peer.addTrack(track, hostStream);
-        });
-
-        // Listen to host ICE candidate send it to the server
-        peer.addEventListener("icecandidate", (event) => {
-            if (event.candidate) {
-                console.log("Sent host ICE candidate");
-                socket.emit(
-                    "host-ice-candidate",
-                    JSON.stringify(event.candidate),
-                    sessionId
-                );
-            }
-        });
-
-        // Create an offer
-        const offer = await peer.createOffer();
-
-        // Set the offer as local description
-        await peer.setLocalDescription(offer);
-
-        // Send the offer to the server
-        socket.emit("offer", offer, sessionId);
-
-        console.log("Sent host offer");
-
-        // Listen for answer
-        socket.on("answer-from-user", async (answer) => {
-            // Set the incoming answer as remote description
-            if (answer) {
-                console.log("Received user answer");
-                await peer.setRemoteDescription(
-                    new RTCSessionDescription(answer)
-                );
-            }
-        });
-
-        // Listen for ICE candidate from user (through server) and add it to the host's peer
-        socket.on("ice-candidate-from-user", async (iceCandidate) => {
-            if (iceCandidate) {
-                try {
-                    console.log("Received user ICE candidate");
-                    await peer.addIceCandidate(JSON.parse(iceCandidate));
-                } catch (e) {
-                    console.error("Error adding received ice candidate", e);
-                }
-            }
-        });
-
+    const createSessionConnection = () => {
         // When a new user joined the session
-        socket.on("user-joined-session", (users) => {
+        socket.on("user-joined-session", async (users, userSocketId) => {
+            // Create an offer
+            const offer = await peer.createOffer();
+
+            // Set the offer as local description
+            await peer.setLocalDescription(offer);
+
+            // Send the offer to the server
+            socket.emit("offer", offer, sessionId, userSocketId);
+
+            console.log("Sent host offer");
+
+            // Listen for answer
+            socket.on("answer-from-user", async (answer) => {
+                // Set the incoming answer as remote description
+                if (!peer.currentRemoteDescription && answer) {
+                    console.log("Received answer from user");
+                    await peer.setRemoteDescription(
+                        new RTCSessionDescription(answer)
+                    );
+                }
+            });
+
+            // Listen to host ICE candidate send it to the server
+            peer.addEventListener("icecandidate", (event) => {
+                if (event.candidate) {
+                    console.log("Sent host ICE candidate");
+                    socket.emit(
+                        "host-ice-candidate",
+                        event.candidate.toJSON(),
+                        sessionId,
+                        userSocketId
+                    );
+                }
+            });
+
+            // Listen for ICE candidate from user (through server) and add it to the host's peer
+            socket.on(
+                "ice-candidate-from-user",
+                async (iceCandidate: RTCIceCandidateInit) => {
+                    if (iceCandidate) {
+                        try {
+                            console.log("Received ICE candidate from user");
+                            await peer.addIceCandidate(iceCandidate);
+                        } catch (e) {
+                            console.error(
+                                "Error adding received ice candidate",
+                                e
+                            );
+                        }
+                    }
+                }
+            );
+
+            console.log("User joined session");
+            // Update the participants list in the local storage
+            localStorage.setItem(
+                "participants_active_in_session",
+                JSON.stringify(users)
+            );
+        });
+
+        socket.on("user-left-session", (users) => {
+            console.log("User left session");
             // Update the participants list in the local storage
             localStorage.setItem(
                 "participants_active_in_session",
@@ -190,18 +218,8 @@ const Session = () => {
         });
     };
 
-    // Participants
+    // Users
     const joinSession = async () => {
-        // Connect the socket to the server
-        // const socket = io("https://zeal-ama.herokuapp.com");
-        const socket = io("http://localhost:5000");
-
-        socket.on("connect", () => {
-            // Emit join session event to server
-            socket.emit("join-session", sessionId, socket.id, userName);
-            console.log("Participant joined the session");
-        });
-
         // When a new user joined the session
         socket.on("user-joined-session", (users) => {
             // Update the participants list in the local storage
@@ -211,37 +229,10 @@ const Session = () => {
             );
         });
 
-        // Peer connection config
-        const config = {
-            iceServers: [
-                {
-                    urls: [
-                        "stun:stun1.l.google.com:19302",
-                        "stun:stun2.l.google.com:19302",
-                    ],
-                },
-            ],
-        };
-
-        // Create a peer connection
-        const peer = new RTCPeerConnection(config);
-
-        // Listen for user ICE candidate and send it to the host (through server)
-        peer.addEventListener("icecandidate", (event) => {
-            if (event.candidate) {
-                console.log("Sent user ICE candidate");
-                socket.emit(
-                    "user-ice-candidate",
-                    JSON.stringify(event.candidate),
-                    sessionId
-                );
-            }
-        });
-
         // Listen for offer from host (through server)
         socket.on("offer-from-host", async (offer) => {
             if (offer) {
-                console.log("Received host offer");
+                console.log("Received offer from host");
 
                 // Set the incoming offer as remote description
                 await peer.setRemoteDescription(
@@ -261,28 +252,43 @@ const Session = () => {
             }
         });
 
-        // Listen for ICE candidate from host (through server) and add it the user's peer
-        socket.on("ice-candidate-from-host", async (iceCandidate) => {
-            if (iceCandidate) {
-                try {
-                    console.log("Received host ICE candidate");
-                    await peer.addIceCandidate(JSON.parse(iceCandidate));
-                } catch (e) {
-                    console.error("Error adding received ice candidate", e);
-                }
+        // Listen for user ICE candidate and send it to the host (through server)
+        peer.addEventListener("icecandidate", (event) => {
+            if (event.candidate) {
+                console.log("Sent user ICE candidate");
+                socket.emit(
+                    "user-ice-candidate",
+                    event.candidate.toJSON(),
+                    sessionId
+                );
             }
         });
+
+        // Listen for ICE candidate from host (through server) and add it the user's peer
+        socket.on(
+            "ice-candidate-from-host",
+            async (iceCandidate: RTCIceCandidateInit) => {
+                if (iceCandidate) {
+                    try {
+                        console.log("Received ICE candidate from host");
+                        await peer.addIceCandidate(iceCandidate);
+                    } catch (e) {
+                        console.error("Error adding received ice candidate", e);
+                    }
+                }
+            }
+        );
 
         // Listen for connectionstatechange on the peer
         peer.addEventListener("connectionstatechange", (event) => {
             if (peer.connectionState === "connected") {
                 console.log(
-                    "Participant you are now directly connected with the host"
+                    "User you are now directly connected with the host"
                 );
             }
         });
 
-        // Create a emopty remote media stream
+        // Create an empty remote media stream
         const remoteStream = new MediaStream();
 
         // Listen to host's stream
@@ -294,21 +300,50 @@ const Session = () => {
         if (streamRef && streamRef.current) {
             streamRef.current.srcObject = remoteStream;
         }
+
+        socket.on("disconnect", () => {
+            socket.emit("leave-session", userSocketId);
+        });
+
+        socket.on("user-left-session", (users) => {
+            console.log("User left session");
+            // Update the participants list in the local storage
+            localStorage.setItem(
+                "participants_active_in_session",
+                JSON.stringify(users)
+            );
+        });
+
+        socket.on("disconnect-user", () => {
+            console.log("Host ended the session");
+            socket.disconnect();
+        });
     };
 
     const [isError, setIsError] = useState("");
     const streamRef = useRef<HTMLVideoElement | null>(null);
 
-    const startHostStream = async () => {
+    const startStream = async () => {
         try {
-            const hostStream = await navigator.mediaDevices.getUserMedia({
+            const stream = await navigator.mediaDevices.getUserMedia({
                 video: true,
                 audio: true,
             });
             if (streamRef && streamRef.current) {
-                streamRef.current.srcObject = hostStream;
+                streamRef.current.srcObject = stream;
             }
-            dispatch({ type: "SET_HOST_STREAM", payload: hostStream });
+
+            // Add the host track to the peer connection
+            stream.getTracks().forEach((track) => {
+                peer.addTrack(track, stream);
+            });
+
+            dispatch({
+                type: "SET_HOST_STREAM",
+                payload: stream,
+            });
+
+            createSessionConnection();
         } catch (error) {
             setIsError(error.message);
             setTimeout(() => {
@@ -317,10 +352,19 @@ const Session = () => {
         }
     };
 
-    const stopHostStream = () => {
+    const endStream = () => {
+        // Stop the host stream
         hostStream?.getTracks().forEach((track) => {
             track.stop();
         });
+
+        // Close the host peer connection
+        if (peer) {
+            peer.close();
+        }
+
+        // Emit end session event to the server
+        socket.emit("end-session", sessionId);
     };
 
     const toggleHostVideo = () => {
@@ -355,12 +399,8 @@ const Session = () => {
                     <Text>By {session.host}</Text>
                     {isHost && (
                         <>
-                            <Button onClick={startHostStream}>
-                                Start Stream
-                            </Button>
-                            <Button onClick={stopHostStream}>
-                                Stop Stream
-                            </Button>
+                            <Button onClick={startStream}>Start Stream</Button>
+                            <Button onClick={endStream}>End Stream</Button>
                             <Button onClick={toggleHostVideo}>
                                 Toogle Video
                             </Button>

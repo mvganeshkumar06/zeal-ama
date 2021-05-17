@@ -4,7 +4,7 @@ type StateType = {
         name: string;
         host: string;
     };
-    hostStream: MediaStream;
+    hostStream: MediaStream | undefined;
     userName: string;
     participants: string[];
     isLoading: {

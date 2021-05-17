@@ -10,7 +10,7 @@ export const initialState: StateType = {
         host: "",
     },
     userName: "",
-    hostStream: new MediaStream(),
+    hostStream: undefined,
     participants: [],
     isLoading: {
         login: false,

@@ -1,4 +1,4 @@
-import { FormEvent } from "react";
+import { useEffect, FormEvent } from "react";
 import {
     Container,
     Text,
@@ -6,14 +6,17 @@ import {
     useThemeContext,
     Input,
     Divider,
+    Spinner,
+    Toast,
+    useNotify,
 } from "@zeal-ui/core";
 import { useHistory } from "react-router-dom";
 import VideoCallIcon from "@material-ui/icons/VideoCall";
 import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import useSessionContext from "../hooks/useSessionContext";
-import { useEffect } from "react";
 import LiveTvIcon from "@material-ui/icons/LiveTv";
+import { useAuth0 } from "@auth0/auth0-react";
 
 const Home = () => {
     const style = useStyleContext();
@@ -78,7 +81,7 @@ const Home = () => {
             color:black;
         }
 
-        .userNameText{
+        .introText{
             text-align:center;
             margin-bottom:3rem;
         }
@@ -111,6 +114,10 @@ const Home = () => {
         state: { session, userName },
         dispatch,
     } = useSessionContext();
+
+    const { isLoading } = useAuth0();
+
+    const { isOpen, onOpen, onClose } = useNotify();
 
     useEffect(() => {
         const userName = localStorage.getItem("userName");
@@ -148,12 +155,20 @@ const Home = () => {
     };
 
     const createSession = () => {
-        const id = uuidv4();
-        saveSessionDetailsOnDbAndRedirect(id, session.name, userName);
+        if (session.name) {
+            const id = uuidv4();
+            saveSessionDetailsOnDbAndRedirect(id, session.name, userName);
+        } else {
+            onOpen("NO_VALID_SESSION_NAME");
+        }
     };
 
     const joinSession = () => {
-        history.push(`/join/${session.id}`);
+        if (session.id) {
+            history.push(`/join/${session.id}`);
+        } else {
+            onOpen("NO_VALID_SESSION_ID");
+        }
     };
 
     return (
@@ -161,86 +176,113 @@ const Home = () => {
             <Text type="mainHeading" className="title">
                 Welcome to Zeal AMA Sessions
             </Text>
-            {userName ? (
-                <>
-                    <Text className="userNameText">
-                        Hey <span className="userName">{userName}</span>, create
-                        your own session or join a live session !
-                    </Text>
-                    <Container
-                        type="col"
-                        rowCenter
-                        colCenter
-                        withBorder
-                        className="sessionContainer"
-                    >
-                        <Container
-                            type="col"
-                            rowCenter
-                            colCenter
-                            className="createSessionContainer"
-                        >
-                            <Input
-                                type="text"
-                                placeholder="Enter a Session Name"
-                                className="input"
-                                value={session.name}
-                                onChange={(
-                                    event: FormEvent<HTMLInputElement>
-                                ) =>
-                                    dispatch({
-                                        type: "SET_SESSION_NAME",
-                                        payload: event.currentTarget.value,
-                                    })
-                                }
-                            />
-                            <Container
-                                type="row"
-                                colCenter
-                                onClick={createSession}
-                                className="createSessionItem"
-                            >
-                                <VideoCallIcon className="icon" />
-                                <Text>Create a new Session</Text>
-                            </Container>
-                        </Container>
-                        <Divider className="divider" />
-                        <Container
-                            type="col"
-                            rowCenter
-                            colCenter
-                            className="joinSessionContainer"
-                        >
-                            <Input
-                                type="text"
-                                placeholder="Enter a Session Code"
-                                className="input"
-                                value={session.id}
-                                onChange={(
-                                    event: FormEvent<HTMLInputElement>
-                                ) =>
-                                    dispatch({
-                                        type: "SET_SESSION_ID",
-                                        payload: event.currentTarget.value,
-                                    })
-                                }
-                            />
-                            <Container
-                                type="row"
-                                colCenter
-                                className="joinSessionItem"
-                                onClick={joinSession}
-                            >
-                                <LiveTvIcon className="icon" />
-                                <Text>Join a live Session</Text>
-                            </Container>
-                        </Container>
-                    </Container>
-                </>
+            <Toast
+                type="center"
+                isOpen={isOpen === "NO_VALID_SESSION_NAME"}
+                onClose={onClose}
+                delay={5000}
+            >
+                Enter a valid session name !
+            </Toast>
+            <Toast
+                type="center"
+                isOpen={isOpen === "NO_VALID_SESSION_ID"}
+                onClose={onClose}
+                delay={5000}
+            >
+                Enter a valid session id !
+            </Toast>
+            {isLoading ? (
+                <Spinner color="blue" />
             ) : (
-                <Text type="subHeading" color="orange">
-                    Login to create your own session or to join a live session !
-                </Text>
+                <>
+                    {userName ? (
+                        <>
+                            <Text>
+                                Hey <span className="userName">{userName}</span>
+                            </Text>
+                            <Text className="introText">
+                                Create your own session or join a live session !
+                            </Text>
+                            <Container
+                                type="col"
+                                rowCenter
+                                colCenter
+                                withBorder
+                                className="sessionContainer"
+                            >
+                                <Container
+                                    type="col"
+                                    rowCenter
+                                    colCenter
+                                    className="createSessionContainer"
+                                >
+                                    <Input
+                                        type="text"
+                                        placeholder="Enter a Session Name"
+                                        className="input"
+                                        value={session.name}
+                                        onChange={(
+                                            event: FormEvent<HTMLInputElement>
+                                        ) =>
+                                            dispatch({
+                                                type: "SET_SESSION_NAME",
+                                                payload:
+                                                    event.currentTarget.value,
+                                            })
+                                        }
+                                    />
+                                    <Container
+                                        type="row"
+                                        colCenter
+                                        onClick={createSession}
+                                        className="createSessionItem"
+                                    >
+                                        <VideoCallIcon className="icon" />
+                                        <Text>Create a new Session</Text>
+                                    </Container>
+                                </Container>
+                                <Divider className="divider" />
+                                <Container
+                                    type="col"
+                                    rowCenter
+                                    colCenter
+                                    className="joinSessionContainer"
+                                >
+                                    <Input
+                                        type="text"
+                                        placeholder="Enter a Session Code"
+                                        className="input"
+                                        value={session.id}
+                                        onChange={(
+                                            event: FormEvent<HTMLInputElement>
+                                        ) =>
+                                            dispatch({
+                                                type: "SET_SESSION_ID",
+                                                payload:
+                                                    event.currentTarget.value,
+                                            })
+                                        }
+                                    />
+                                    <Container
+                                        type="row"
+                                        colCenter
+                                        className="joinSessionItem"
+                                        onClick={joinSession}
+                                    >
+                                        <LiveTvIcon className="icon" />
+                                        <Text>Join a live Session</Text>
+                                    </Container>
+                                </Container>
+                            </Container>
+                        </>
+                    ) : (
+                        <Text type="subHeading" color="orange">
+                            Login to create your own session or to join a live
+                            session !
+                        </Text>
+                    )}
+                </>
             )}
         </Container>
     );

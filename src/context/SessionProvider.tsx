@@ -8,13 +8,21 @@ export const initialState: StateType = {
         id: "",
         name: "",
         host: "",
+        chats: [],
+        users: [],
     },
     userName: "",
+    userSocketId: "",
     hostStream: undefined,
-    participants: [],
     isLoading: {
         login: false,
         session: true,
+        sessionChat: true,
+    },
+    isError: {
+        session: false,
+        hostMedia: false,
+        sessionChat: false,
     },
 };
 

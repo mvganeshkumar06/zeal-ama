@@ -1,15 +1,18 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
     Container,
     List,
     ListItem,
     useStyleContext,
     useThemeContext,
+    Text,
 } from "@zeal-ui/core";
 import HighlightOffIcon from "@material-ui/icons/HighlightOff";
 import MenuIcon from "@material-ui/icons/Menu";
 import { Link } from "react-router-dom";
 import navigationItems from "../utils/NavigationItems";
+import PersonIcon from "@material-ui/icons/Person";
+import { useAuth0 } from "@auth0/auth0-react";
 
 const Navigation = () => {
     const style = useStyleContext();
@@ -54,7 +57,8 @@ const Navigation = () => {
         .link{
             display:flex;
             align-items:column;
-            margin:0rem;    
+            margin-top:1rem;
+            margin-right:1rem;    
         }
 
         .link svg{
@@ -63,7 +67,11 @@ const Navigation = () => {
             margin-right:0.5rem;
         }
 
-        @media (min-width: 1024px) {
+        .authText{
+            margin:0rem;
+        }
+
+        @media (min-width: 768px) {
             .navigationOpenBtn {
                 display: none;
             }
@@ -71,6 +79,8 @@ const Navigation = () => {
     `;
 
     const [isNavigationOpen, setIsNavigationOpen] = useState(false);
+
+    const { loginWithRedirect, logout, user } = useAuth0();
 
     return (
         <Container type="col" customStyles={styles}>
@@ -103,6 +113,38 @@ const Navigation = () => {
                                 </ListItem>
                             );
                         })}
+                        {user ? (
+                            <ListItem key={2}>
+                                <Link
+                                    to="/login"
+                                    onClick={() => {
+                                        localStorage.removeItem("userName");
+                                        logout({
+                                            returnTo: window.location.origin,
+                                        });
+                                        setIsNavigationOpen(!isNavigationOpen);
+                                    }}
+                                    className="link"
+                                >
+                                    <PersonIcon />
+                                    <Text className="authText">Logout</Text>
+                                </Link>
+                            </ListItem>
+                        ) : (
+                            <ListItem key={3}>
+                                <Link
+                                    to={`/login`}
+                                    onClick={() => {
+                                        loginWithRedirect();
+                                        setIsNavigationOpen(!isNavigationOpen);
+                                    }}
+                                    className="link"
+                                >
+                                    <PersonIcon />
+                                    <Text className="authText">Login</Text>
+                                </Link>
+                            </ListItem>
+                        )}
                     </List>
                 </Container>
             )}

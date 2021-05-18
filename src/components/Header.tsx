@@ -11,6 +11,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import PersonIcon from "@material-ui/icons/Person";
 import { useEffect } from "react";
 import useSessionContext from "../hooks/useSessionContext";
+import SpeakerNotesIcon from "@material-ui/icons/SpeakerNotes";
 
 const Header = () => {
     const style = useStyleContext();
@@ -31,7 +32,7 @@ const Header = () => {
 
         .title {
             font-size:1.25rem;
-            margin:0rem 0rem 0rem 3rem;
+            margin-left:3.5rem;
         }
 
         .iconsContainer {
@@ -61,8 +62,13 @@ const Header = () => {
         }
 
         @media(min-width:768px){
-            .title{
-                font-size:1.25rem;
+            .zealAmaLink{
+                display:inline;
+                margin-left:3rem;
+            }
+            .title {
+                font-size: 1.25rem;
+                margin-left: 1.5rem;
             }
             .iconItem{
                 display:flex;
@@ -78,13 +84,6 @@ const Header = () => {
         }
 
         @media (min-width: 1024px) {
-            .zealAmaLink{
-                display:inline;
-            }
-            .title {
-                font-size: 1.5rem;
-                margin-left: 1rem;
-            }
             .iconsContainer {
                 margin-left: auto;
                 margin-right: 5rem;
@@ -123,8 +122,8 @@ const Header = () => {
             customStyles={styles}
         >
             <Container type="row" rowCenter colCenter>
-                <a href="https://zeal-ama.netlify.app/">
-                    <Text>Icon here</Text>
+                <a href="https://zeal-ama.netlify.app/" className="zealAmaLink">
+                    <SpeakerNotesIcon className="zealAmaICon" />
                 </a>
                 <Text className="title">Zeal AMA</Text>
             </Container>

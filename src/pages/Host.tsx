@@ -1,29 +1,73 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import {
     Container,
-    Button,
     Alert,
     useThemeContext,
     useStyleContext,
 } from "@zeal-ui/core";
 import useSessionContext from "../hooks/useSessionContext";
 import { io } from "socket.io-client";
+import VideocamIcon from "@material-ui/icons/Videocam";
+import VideocamOffIcon from "@material-ui/icons/VideocamOff";
+import MicIcon from "@material-ui/icons/Mic";
+import MicOffIcon from "@material-ui/icons/MicOff";
+import PlayArrowIcon from "@material-ui/icons/PlayArrow";
+import CallEndIcon from "@material-ui/icons/CallEnd";
 
 const Host = () => {
     const { theme } = useThemeContext();
     const style = useStyleContext();
     const styles = `
-    
-        margin:5rem 0rem;
+        width:100%;
+        margin:0rem 1rem;
 
         .stream{
-            border:2px solid ${theme === "light" ? "black" : "white"};
+            border:1px solid ${theme === "light" ? "black" : "white"};
             border-radius:${style.common.borderRadius};
-            width:20rem;
-            height:15rem;
-            margin:2rem 0rem 2rem 0rem;
+            width:15rem;
+            height:fit-content;
+            margin-bottom:2rem;
+        }
+        .iconBg{
+            width:2.5rem;
+            height:2.5rem;
+            background-color:${
+                theme === "light"
+                    ? style.colors.orange[2]
+                    : style.colors.orange[3]
+            };
+            border-radius:50%;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            margin:0rem 0.5rem;
+        }
+        .iconBg:hover{
+            cursor:pointer;
+            box-shadow:${style.common.boxShadow};
+        }
+        .iconBgDisabled{
+            background-color:${
+                theme === "light" ? style.colors.gray[2] : style.colors.gray[3]
+            };
+        }
+        .icon{
+            width:1.5rem;
+            height:1.5rem;
+            color:black;
         }
 
+        @media(min-width:425px){
+            .stream{
+                width:20rem;
+            }
+        }
+
+        @media(min-width:768px){
+            .stream{
+                width:25rem;
+            }
+        }
     `;
 
     const {
@@ -32,9 +76,19 @@ const Host = () => {
     } = useSessionContext();
 
     const streamRef = useRef<HTMLVideoElement | null>(null);
+    const [isVideoOn, setIsVideoOn] = useState(false);
+    const [isMicOn, setIsMicOn] = useState(false);
+
+    let SOCKET_URL: string;
+
+    if (process.env.NODE_ENV === "development") {
+        SOCKET_URL = "http://localhost:5000";
+    } else {
+        SOCKET_URL = "https://zeal-ama.herokuapp.com";
+    }
 
     // Connect the socket to the server
-    const socket = io("https://zeal-ama.herokuapp.com");
+    const socket = io(SOCKET_URL);
 
     useEffect(() => {
         const listenToSocketEvents = () => {
@@ -176,6 +230,9 @@ const Host = () => {
             stream.getTracks().forEach((track) => {
                 peer.addTrack(track, stream);
             });
+
+            setIsVideoOn(true);
+            setIsMicOn(true);
         } catch (error) {
             dispatch({
                 type: "SET_IS_ERROR",
@@ -206,6 +263,7 @@ const Host = () => {
     };
 
     const toggleVideo = () => {
+        setIsVideoOn(!isVideoOn);
         hostStream?.getTracks().forEach((track) => {
             if (track.kind === "video") {
                 track.enabled = !track.enabled;
@@ -213,7 +271,8 @@ const Host = () => {
         });
     };
 
-    const toggleAudio = () => {
+    const toggleMic = () => {
+        setIsMicOn(!isMicOn);
         hostStream?.getTracks().forEach((track) => {
             if (track.kind === "audio") {
                 track.enabled = !track.enabled;
@@ -223,19 +282,13 @@ const Host = () => {
 
     return (
         <Container type="col" rowCenter customStyles={styles}>
-            <Container type="col" className="feedbackContainer">
-                {isError.hostMedia && (
-                    <Alert type="danger">
-                        Error while tyring to stream media. Please ensure that
-                        you have allowed permission for accessing your mic,
-                        webcam and check the connectivity of your devices.
-                    </Alert>
-                )}
-            </Container>
-            <Button onClick={startStream}>Start Stream</Button>
-            <Button onClick={endStream}>End Stream</Button>
-            <Button onClick={toggleVideo}>Toggle Video</Button>
-            <Button onClick={toggleAudio}>Toggle Audio</Button>
+            {isError.hostMedia && (
+                <Alert type="danger">
+                    Error while tyring to stream media. Please ensure that you
+                    have allowed permission for accessing your mic, webcam and
+                    check the connectivity of your devices.
+                </Alert>
+            )}
             <video
                 ref={streamRef}
                 autoPlay
@@ -243,6 +296,54 @@ const Host = () => {
                 className="stream"
                 muted
             />
+            <Container type="row" rowCenter colCenter>
+                {hostStream ? (
+                    <span className="iconBg iconBgDisabled">
+                        <PlayArrowIcon className="icon" />
+                    </span>
+                ) : (
+                    <span className="iconBg" onClick={startStream}>
+                        <PlayArrowIcon className="icon" />
+                    </span>
+                )}
+                {hostStream ? (
+                    <span className="iconBg" onClick={endStream}>
+                        <CallEndIcon className="icon" />
+                    </span>
+                ) : (
+                    <span className="iconBg iconBgDisabled">
+                        <CallEndIcon className="icon" />
+                    </span>
+                )}
+                {hostStream && (
+                    <>
+                        {isVideoOn ? (
+                            <span className="iconBg" onClick={toggleVideo}>
+                                <VideocamIcon className="icon" />
+                            </span>
+                        ) : (
+                            <span
+                                className="iconBg iconBgDisabled"
+                                onClick={toggleVideo}
+                            >
+                                <VideocamOffIcon className="icon" />
+                            </span>
+                        )}
+                        {isMicOn ? (
+                            <span className="iconBg">
+                                <MicIcon onClick={toggleMic} className="icon" />
+                            </span>
+                        ) : (
+                            <span className="iconBg iconBgDisabled">
+                                <MicOffIcon
+                                    onClick={toggleMic}
+                                    className="icon"
+                                />
+                            </span>
+                        )}
+                    </>
+                )}
+            </Container>
         </Container>
     );
 };

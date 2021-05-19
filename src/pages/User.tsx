@@ -32,8 +32,16 @@ const User = () => {
 
     const streamRef = useRef<HTMLVideoElement | null>(null);
 
+    let SOCKET_URL: string;
+
+    if (process.env.NODE_ENV === "development") {
+        SOCKET_URL = "http://localhost:5000";
+    } else {
+        SOCKET_URL = "https://zeal-ama.herokuapp.com";
+    }
+
     // Connect the socket to the server
-    const socket = io("https://zeal-ama.herokuapp.com");
+    const socket = io(SOCKET_URL);
 
     useEffect(() => {
         const listenToSocketEvents = () => {

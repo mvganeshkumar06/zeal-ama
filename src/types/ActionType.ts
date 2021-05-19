@@ -6,7 +6,6 @@ type ActionType =
               | "SET_USERNAME"
               | "SET_SESSION_ID"
               | "SET_SESSION_NAME"
-              | "SET_SESSION_HOST"
               | "SET_USER_SOCKET_ID"
               | "ADD_PARTICIPANT"
               | "REMOVE_PARTICIPANT";

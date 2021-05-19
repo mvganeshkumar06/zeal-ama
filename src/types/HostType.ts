@@ -1,6 +1,6 @@
-type UserType = {
+type HostType = {
     socketId: string;
     name: string;
 };
 
-export default UserType;
+export default HostType;

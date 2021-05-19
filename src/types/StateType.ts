@@ -1,10 +1,10 @@
-import { ChatType, UserType } from "./index";
+import { ChatType, UserType, HostType } from "./index";
 
 type StateType = {
     session: {
         id: string;
         name: string;
-        host: string;
+        host: HostType;
         users: UserType[];
         chats: ChatType[];
     };

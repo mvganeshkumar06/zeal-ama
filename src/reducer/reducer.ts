@@ -22,11 +22,6 @@ const reducer = (state: StateType, action: ActionType): StateType => {
                 ...state,
                 session: { ...state.session, name: action.payload },
             };
-        case "SET_SESSION_HOST":
-            return {
-                ...state,
-                session: { ...state.session, host: action.payload },
-            };
         case "SET_SESSION":
             return {
                 ...state,

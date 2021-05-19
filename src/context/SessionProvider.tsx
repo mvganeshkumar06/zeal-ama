@@ -7,7 +7,10 @@ export const initialState: StateType = {
     session: {
         id: "",
         name: "",
-        host: "",
+        host: {
+            socketId: "",
+            name: "",
+        },
         chats: [],
         users: [],
     },

@@ -1,79 +1,115 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import {
     Container,
-    Button,
+    Text,
     useThemeContext,
     useStyleContext,
 } from "@zeal-ui/core";
 import useSessionContext from "../hooks/useSessionContext";
-import { io } from "socket.io-client";
+import PlayArrowIcon from "@material-ui/icons/PlayArrow";
+import CallEndIcon from "@material-ui/icons/CallEnd";
+import { useHistory } from "react-router-dom";
 
 const User = () => {
     const { theme } = useThemeContext();
     const style = useStyleContext();
     const styles = `
-    
-        margin:5rem 0rem;
+        width:100%;
+        margin:0rem 1rem;
 
         .stream{
-            border:2px solid ${theme === "light" ? "black" : "white"};
+            border:1px solid ${theme === "light" ? "black" : "white"};
             border-radius:${style.common.borderRadius};
-            width:20rem;
-            height:15rem;
-            margin:2rem 0rem 2rem 0rem;
+            width:15rem;
+            height:fit-content;
+            margin-bottom:2rem;
+        }
+
+        .iconBg{
+            width:2.5rem;
+            height:2.5rem;
+            background-color:${
+                theme === "light"
+                    ? style.colors.orange[2]
+                    : style.colors.orange[3]
+            };
+            border-radius:50%;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            margin:0rem 0.5rem;
+        }
+
+        .iconBg:hover{
+            cursor:pointer;
+            box-shadow:${style.common.boxShadow};
+        }
+        
+        .iconBgDisabled{
+            background-color:${
+                theme === "light" ? style.colors.gray[2] : style.colors.gray[3]
+            };
+        }
+        
+        .icon{
+            width:1.5rem;
+            height:1.5rem;
+            color:black;
+        }
+
+        .iconText{
+            margin:0rem;
+        }
+
+        .iconItem{
+            margin:0rem 1rem;
+        }
+
+        @media(min-width:425px){
+            .stream{
+                width:20rem;
+            }
+        }
+
+        @media(min-width:768px){
+            .stream{
+                width:25rem;
+            }
         }
 
     `;
 
     const {
-        state: { session, userName, userSocketId },
+        state: { session, socket, userName, userSocketId },
         dispatch,
     } = useSessionContext();
 
     const streamRef = useRef<HTMLVideoElement | null>(null);
-
-    let SOCKET_URL: string;
-
-    if (process.env.NODE_ENV === "development") {
-        SOCKET_URL = "http://localhost:5000";
-    } else {
-        SOCKET_URL = "https://zeal-ama.herokuapp.com";
-    }
-
-    // Connect the socket to the server
-    const socket = io(SOCKET_URL);
+    const [isHostStreaming, setIsHostStreaming] = useState(false);
+    const history = useHistory();
 
     useEffect(() => {
         const listenToSocketEvents = () => {
-            // When user socket is connected
             socket.on("connect", () => {
-                // Indicate the server that the user joined the session
                 socket.emit("join-session", session.id, socket.id, userName);
                 dispatch({
                     type: "SET_USER_SOCKET_ID",
                     payload: socket.id,
                 });
-                console.log("User joined session");
             });
 
-            // When a new user joined the session
-            socket.on("user-joined-session", async (users) => {
-                console.log("User joined session");
-                // Update the participants in the local storage
-                localStorage.setItem(
-                    "participants_active_in_session",
-                    JSON.stringify(users)
-                );
+            socket.on("user-joined-session", (users) => {
+                dispatch({
+                    type: "SET_SESSION_USERS",
+                    payload: users,
+                });
             });
 
-            // When a user left the session
             socket.on("user-left-session", (users) => {
-                console.log("User left session");
-                // Update the participants in the local storage
-                localStorage.setItem(
-                    "participants_active_in_session",
-                    JSON.stringify(users)
-                );
+                dispatch({
+                    type: "SET_SESSION_USERS",
+                    payload: users,
+                });
             });
         };
         listenToSocketEvents();
@@ -103,6 +139,7 @@ const User = () => {
             if (streamRef && streamRef.current) {
                 streamRef.current.srcObject = hostStream;
             }
+            setIsHostStreaming(true);
         };
 
         // Handle user peer negotiation
@@ -119,10 +156,8 @@ const User = () => {
                 offer,
                 socket.id,
                 async (answer: RTCSessionDescriptionInit) => {
-                    console.log("Sent offer");
                     // Set the incoming answer as remote description
                     if (answer) {
-                        console.log("Received answer");
                         await peer.setRemoteDescription(
                             new RTCSessionDescription(answer)
                         );
@@ -134,7 +169,6 @@ const User = () => {
         // Listen to user ICE candidate and send it to the server
         peer.onicecandidate = (event) => {
             if (event.candidate) {
-                console.log("Sent ICE candidate");
                 socket.emit("user-ice-candidate", event.candidate.toJSON());
             }
         };
@@ -145,7 +179,6 @@ const User = () => {
             async (iceCandidate: RTCIceCandidateInit) => {
                 if (iceCandidate) {
                     try {
-                        console.log("Received ICE candidate from");
                         await peer.addIceCandidate(iceCandidate);
                     } catch (error) {
                         console.error(
@@ -161,23 +194,53 @@ const User = () => {
     };
 
     const watchStream = () => {
-        // Disable watch stream btn here
         const peer = createUserPeerConnection();
         peer.addTransceiver("video");
         peer.addTransceiver("audio");
     };
 
     const leaveSession = () => {
-        // When user leaves session
         socket.emit("leave-session", userSocketId);
         socket.disconnect();
+        history.push("/rejoin");
     };
 
     return (
         <Container type="col" rowCenter customStyles={styles}>
-            <Button onClick={watchStream}>Watch stream</Button>
-            <Button onClick={leaveSession}>Leave Session</Button>
             <video ref={streamRef} autoPlay playsInline className="stream" />
+            {isHostStreaming ? (
+                <Container type="col" rowCenter colCenter className="iconItem">
+                    <span className="iconBg" onClick={leaveSession}>
+                        <CallEndIcon className="icon" />
+                    </span>
+                    <Text className="iconText">Leave session</Text>
+                </Container>
+            ) : (
+                <Container type="row" rowCenter colCenter>
+                    <Container
+                        type="col"
+                        rowCenter
+                        colCenter
+                        className="iconItem"
+                    >
+                        <span className="iconBg" onClick={watchStream}>
+                            <PlayArrowIcon className="icon" />
+                        </span>
+                        <Text className="iconText">Watch stream</Text>
+                    </Container>
+                    <Container
+                        type="col"
+                        rowCenter
+                        colCenter
+                        className="iconItem"
+                    >
+                        <span className="iconBg" onClick={leaveSession}>
+                            <CallEndIcon className="icon" />
+                        </span>
+                        <Text className="iconText">Leave session</Text>
+                    </Container>
+                </Container>
+            )}
         </Container>
     );
 };

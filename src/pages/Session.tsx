@@ -5,14 +5,38 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import { Host, User } from "./index";
 import { Chat, Question } from "../components/index";
+import GroupIcon from "@material-ui/icons/Group";
 
 const Session = () => {
     const styles = `
         margin:5rem 1rem;
+        
         .sessionName, .hostName{
             width:100%;
             text-align:center;
         }
+
+        .viewersContainer{
+            margin-top:2rem;
+        }
+
+        .viewersIcon{
+            width:1.5rem;
+            height:1.5rem;
+        }
+
+        .iconText{
+            margin:0rem;
+        }
+
+        .viewersIconItem{
+            margin-right:0.5rem;
+        }
+
+        .viewersCount{
+            margin:0rem;
+        }
+
         .sessionGrid{
             width:100%;
             margin-top:3rem;
@@ -31,7 +55,7 @@ const Session = () => {
     `;
 
     const {
-        state: { session, isLoading, isError, userName },
+        state: { session, isLoading, isError },
         dispatch,
     } = useSessionContext();
 
@@ -44,7 +68,6 @@ const Session = () => {
     const [isHost, setIsHost] = useState(false);
     const [hostIdentified, setHostIdentified] = useState(false);
 
-    // Fetch session details after getting the sessionId
     useEffect(() => {
         let CURRENT_SESSION_URL: string;
 
@@ -68,12 +91,6 @@ const Session = () => {
                     type: "SET_IS_ERROR",
                     payload: { session: true },
                 });
-                setTimeout(() => {
-                    dispatch({
-                        type: "SET_IS_ERROR",
-                        payload: { session: false },
-                    });
-                }, 6000);
             } finally {
                 dispatch({
                     type: "SET_IS_LOADING",
@@ -85,68 +102,70 @@ const Session = () => {
         fetchSessionDetails();
     }, [dispatch, sessionId]);
 
-    // Identify whether current user is the host after session details are fetched
     useEffect(() => {
         if (!isLoading.session && session) {
             const savedUserName = localStorage.getItem("userName");
             if (savedUserName === session.host.name) {
-                console.log("Welcome host");
                 setIsHost(true);
-            } else {
-                console.log("Welcome user");
             }
             setHostIdentified(true);
         }
     }, [isLoading.session, session]);
 
-    // Save participants on local storage after the host is identified
-    useEffect(() => {
-        if (hostIdentified) {
-            if (isHost) {
-                localStorage.setItem(
-                    "participants_active_in_session",
-                    JSON.stringify([])
-                );
-            } else {
-                localStorage.setItem(
-                    "participants_active_in_session",
-                    JSON.stringify([userName])
-                );
-            }
-        }
-        // eslint-disable-next-line
-    }, [hostIdentified]);
-
     return (
         <Container type="col" customStyles={styles}>
-            {isLoading.session && <Spinner color="blue" />}
-            {isError.session && (
-                <Alert type="danger">
-                    Error while tyring to get session details
-                </Alert>
-            )}
-            <Text type="mainHeading" className="sessionName">
-                {session.name}
-            </Text>
-            <Text className="hostName">By {session.host.name}</Text>
+            <Container type="col" rowCenter colCenter width="100%">
+                {isLoading.session && <Spinner color="blue" />}
+                {isError.session && (
+                    <Alert type="danger">
+                        Error while tyring to get session details
+                    </Alert>
+                )}
+            </Container>
             {!isLoading.session && !isError.session && hostIdentified && (
-                <Grid col={1} className="sessionGrid">
-                    <Container
-                        type="col"
-                        rowCenter
-                        className="sessionContainer"
-                    >
-                        {isHost ? <Host /> : <User />}
-                        <Chat />
+                <>
+                    <Container type="col" rowCenter width="100%">
+                        <Text type="mainHeading" className="sessionName">
+                            {session.name}
+                        </Text>
+                        <Text className="hostName">By {session.host.name}</Text>
+                        <Container
+                            type="row"
+                            rowCenter
+                            className="viewersContainer"
+                        >
+                            <Container
+                                type="col"
+                                rowCenter
+                                colCenter
+                                className="viewersIconItem"
+                            >
+                                <GroupIcon className="viewersIcon" />
+                                <Text className="iconText">Viewers</Text>
+                            </Container>
+                            <Text className="viewersCount">
+                                ({session.users.length})
+                            </Text>
+                        </Container>
                     </Container>
-                    <Container
-                        type="col"
-                        rowCenter
-                        className="questionContainer"
-                    >
-                        <Question />
-                    </Container>
-                </Grid>
+                    <Grid col={1} className="sessionGrid">
+                        <Container
+                            type="col"
+                            rowCenter
+                            className="sessionContainer"
+                        >
+                            {isHost ? <Host /> : <User />}
+                            <Chat />
+                        </Container>
+                        <Container
+                            type="col"
+                            rowCenter
+                            className="questionContainer"
+                        >
+                            <Question isHost={isHost} />
+                        </Container>
+                    </Grid>
+                </>
             )}
         </Container>
     );

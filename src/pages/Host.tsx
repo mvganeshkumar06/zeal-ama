@@ -4,9 +4,9 @@ import {
     Alert,
     useThemeContext,
     useStyleContext,
+    Text,
 } from "@zeal-ui/core";
 import useSessionContext from "../hooks/useSessionContext";
-import { io } from "socket.io-client";
 import VideocamIcon from "@material-ui/icons/Videocam";
 import VideocamOffIcon from "@material-ui/icons/VideocamOff";
 import MicIcon from "@material-ui/icons/Mic";
@@ -28,6 +28,7 @@ const Host = () => {
             height:fit-content;
             margin-bottom:2rem;
         }
+        
         .iconBg{
             width:2.5rem;
             height:2.5rem;
@@ -42,19 +43,30 @@ const Host = () => {
             align-items:center;
             margin:0rem 0.5rem;
         }
+        
         .iconBg:hover{
             cursor:pointer;
             box-shadow:${style.common.boxShadow};
         }
+        
         .iconBgDisabled{
             background-color:${
                 theme === "light" ? style.colors.gray[2] : style.colors.gray[3]
             };
         }
+        
         .icon{
             width:1.5rem;
             height:1.5rem;
             color:black;
+        }
+
+        .iconText{
+            margin-top:0.25rem;
+        }
+
+        .iconItem{
+            margin:0rem 1rem;
         }
 
         @media(min-width:425px){
@@ -71,7 +83,7 @@ const Host = () => {
     `;
 
     const {
-        state: { session, hostStream, userName, isError },
+        state: { session, socket, hostStream, isError },
         dispatch,
     } = useSessionContext();
 
@@ -79,55 +91,28 @@ const Host = () => {
     const [isVideoOn, setIsVideoOn] = useState(false);
     const [isMicOn, setIsMicOn] = useState(false);
 
-    let SOCKET_URL: string;
-
-    if (process.env.NODE_ENV === "development") {
-        SOCKET_URL = "http://localhost:5000";
-    } else {
-        SOCKET_URL = "https://zeal-ama.herokuapp.com";
-    }
-
-    // Connect the socket to the server
-    const socket = io(SOCKET_URL);
-
     useEffect(() => {
         const listenToSocketEvents = () => {
-            // When host socket is connected
             socket.on("connect", () => {
-                // Indicate the server that the host joined the session
-                socket.emit(
-                    "host-join-session",
-                    session.id,
-                    socket.id,
-                    userName
-                );
-                console.log("Host joined session");
+                socket.emit("host-join-session", session.id, socket.id);
             });
 
-            // When host ended the session
             socket.on("disconnect-user", () => {
-                console.log("Host ended the session");
                 socket.disconnect();
             });
 
-            // When a new user joined the session
-            socket.on("user-joined-session", async (users) => {
-                console.log("User joined session");
-                // Update the participants in the local storage
-                localStorage.setItem(
-                    "participants_active_in_session",
-                    JSON.stringify(users)
-                );
+            socket.on("user-joined-session", (users) => {
+                dispatch({
+                    type: "SET_SESSION_USERS",
+                    payload: users,
+                });
             });
 
-            // When a user left the session
             socket.on("user-left-session", (users) => {
-                console.log("User left session");
-                // Update the participants in the local storage
-                localStorage.setItem(
-                    "participants_active_in_session",
-                    JSON.stringify(users)
-                );
+                dispatch({
+                    type: "SET_SESSION_USERS",
+                    payload: users,
+                });
             });
         };
         listenToSocketEvents();
@@ -164,10 +149,8 @@ const Host = () => {
                 offer,
                 socket.id,
                 async (answer: RTCSessionDescriptionInit) => {
-                    console.log("Sent offer");
                     // Set the incoming answer as remote description
                     if (answer) {
-                        console.log("Received answer");
                         await peer.setRemoteDescription(
                             new RTCSessionDescription(answer)
                         );
@@ -179,7 +162,6 @@ const Host = () => {
         // Listen to host ICE candidate and send it to the server
         peer.onicecandidate = (event) => {
             if (event.candidate) {
-                console.log("Sent ICE candidate");
                 socket.emit("host-ice-candidate", event.candidate.toJSON());
             }
         };
@@ -190,7 +172,6 @@ const Host = () => {
             async (iceCandidate: RTCIceCandidateInit) => {
                 if (iceCandidate) {
                     try {
-                        console.log("Received ICE candidate from server");
                         await peer.addIceCandidate(iceCandidate);
                     } catch (error) {
                         console.error(
@@ -207,8 +188,6 @@ const Host = () => {
 
     const startStream = async () => {
         try {
-            // Disable start stream btn
-
             // Get host media
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: true,
@@ -253,10 +232,7 @@ const Host = () => {
             track.stop();
         });
 
-        // // Close the host peer connection
-        // if (peer) {
-        //     peer.close();
-        // }
+        // Close the host peer connection
 
         // Emit end session event to the server
         socket.emit("end-session", session.id);
@@ -298,48 +274,94 @@ const Host = () => {
             />
             <Container type="row" rowCenter colCenter>
                 {hostStream ? (
-                    <span className="iconBg iconBgDisabled">
-                        <PlayArrowIcon className="icon" />
-                    </span>
+                    <>
+                        <Container
+                            type="col"
+                            rowCenter
+                            colCenter
+                            className="iconItem"
+                        >
+                            <span className="iconBg" onClick={endStream}>
+                                <CallEndIcon className="icon" />
+                            </span>
+                            <Text className="iconText"> Stop stream </Text>
+                        </Container>
+                    </>
                 ) : (
-                    <span className="iconBg" onClick={startStream}>
-                        <PlayArrowIcon className="icon" />
-                    </span>
-                )}
-                {hostStream ? (
-                    <span className="iconBg" onClick={endStream}>
-                        <CallEndIcon className="icon" />
-                    </span>
-                ) : (
-                    <span className="iconBg iconBgDisabled">
-                        <CallEndIcon className="icon" />
-                    </span>
+                    <>
+                        <Container
+                            type="col"
+                            rowCenter
+                            colCenter
+                            className="iconItem"
+                        >
+                            <span className="iconBg" onClick={startStream}>
+                                <PlayArrowIcon className="icon" />
+                            </span>
+                            <Text className="iconText"> Start stream </Text>
+                        </Container>
+                    </>
                 )}
                 {hostStream && (
                     <>
                         {isVideoOn ? (
-                            <span className="iconBg" onClick={toggleVideo}>
-                                <VideocamIcon className="icon" />
-                            </span>
-                        ) : (
-                            <span
-                                className="iconBg iconBgDisabled"
-                                onClick={toggleVideo}
+                            <Container
+                                type="col"
+                                rowCenter
+                                colCenter
+                                className="iconItem"
                             >
-                                <VideocamOffIcon className="icon" />
-                            </span>
+                                <span className="iconBg" onClick={toggleVideo}>
+                                    <VideocamIcon className="icon" />
+                                </span>
+                                <Text className="iconText">Off Video</Text>
+                            </Container>
+                        ) : (
+                            <Container
+                                type="col"
+                                rowCenter
+                                colCenter
+                                className="iconItem"
+                            >
+                                <span
+                                    className="iconBg iconBgDisabled"
+                                    onClick={toggleVideo}
+                                >
+                                    <VideocamOffIcon className="icon" />
+                                </span>
+                                <Text className="iconText">On Video</Text>
+                            </Container>
                         )}
                         {isMicOn ? (
-                            <span className="iconBg">
-                                <MicIcon onClick={toggleMic} className="icon" />
-                            </span>
+                            <Container
+                                type="col"
+                                rowCenter
+                                colCenter
+                                className="iconItem"
+                            >
+                                <span className="iconBg">
+                                    <MicIcon
+                                        onClick={toggleMic}
+                                        className="icon"
+                                    />
+                                </span>
+                                <Text className="iconText">Off Mic</Text>
+                            </Container>
                         ) : (
-                            <span className="iconBg iconBgDisabled">
-                                <MicOffIcon
-                                    onClick={toggleMic}
-                                    className="icon"
-                                />
-                            </span>
+                            <Container
+                                type="col"
+                                rowCenter
+                                colCenter
+                                className="iconItem"
+                            >
+                                <span className="iconBg iconBgDisabled">
+                                    <MicOffIcon
+                                        onClick={toggleMic}
+                                        className="icon"
+                                    />
+                                </span>
+                                <Text className="iconText">On Mic</Text>
+                            </Container>
                         )}
                     </>
                 )}

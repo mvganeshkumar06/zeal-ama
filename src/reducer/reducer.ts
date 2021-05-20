@@ -32,10 +32,20 @@ const reducer = (state: StateType, action: ActionType): StateType => {
                 ...state,
                 hostStream: action.payload,
             };
-        case "SET_SESSION_CHAT":
+        case "SET_SESSION_USERS":
+            return {
+                ...state,
+                session: { ...state.session, users: action.payload },
+            };
+        case "SET_SESSION_CHATS":
             return {
                 ...state,
                 session: { ...state.session, chats: action.payload },
+            };
+        case "SET_SESSION_QUESTIONS":
+            return {
+                ...state,
+                session: { ...state.session, questions: action.payload },
             };
         case "SET_IS_LOADING":
             return {

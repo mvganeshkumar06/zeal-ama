@@ -1,4 +1,4 @@
-import { SessionType, ChatType } from "./index";
+import { SessionType, ChatType, UserType, QuestionType } from "./index";
 
 type ActionType =
     | {
@@ -11,8 +11,10 @@ type ActionType =
               | "REMOVE_PARTICIPANT";
           payload: string;
       }
-    | { type: "SET_SESSION_CHAT"; payload: ChatType[] }
     | { type: "SET_SESSION"; payload: SessionType }
+    | { type: "SET_SESSION_USERS"; payload: UserType[] }
+    | { type: "SET_SESSION_CHATS"; payload: ChatType[] }
+    | { type: "SET_SESSION_QUESTIONS"; payload: QuestionType[] }
     | { type: "SET_HOST_STREAM"; payload: MediaStream }
     | {
           type: "SET_IS_LOADING" | "SET_IS_ERROR";

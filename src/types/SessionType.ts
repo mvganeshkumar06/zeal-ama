@@ -1,4 +1,4 @@
-import { ChatType, UserType } from "./index";
+import { ChatType, QuestionType, UserType } from "./index";
 
 type SessionType = {
     id: string;
@@ -9,6 +9,7 @@ type SessionType = {
     };
     chats: ChatType[];
     users: UserType[];
+    questions: QuestionType[];
 };
 
 export default SessionType;

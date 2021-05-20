@@ -131,12 +131,6 @@ const Home = () => {
 
     const history = useHistory();
 
-    let SESSION_URL = "https://zeal-ama.herokuapp.com/session";
-
-    if (process.env.NODE_ENV === "development") {
-        SESSION_URL = "http://localhost:5000/session";
-    }
-
     const saveSessionDetailsOnDbAndRedirect = async (
         sessionId: string,
         sessionName: string,
@@ -145,7 +139,7 @@ const Home = () => {
         try {
             const response = await axios({
                 method: "post",
-                url: SESSION_URL,
+                url: "https://zeal-ama.herokuapp.com/session",
                 data: {
                     id: sessionId,
                     name: sessionName,

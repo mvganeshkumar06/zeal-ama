@@ -113,17 +113,11 @@ const Chat = () => {
     const [message, setMessage] = useState("");
 
     useEffect(() => {
-        let SESSION_CHAT_URL = `https://zeal-ama.herokuapp.com/session/${session.id}/chat`;
-
-        if (process.env.NODE_ENV === "development") {
-            SESSION_CHAT_URL = `http://localhost:5000/session/${session.id}/chat`;
-        }
-
         const fetchSessionChatMessages = async () => {
             try {
                 const response = await axios({
                     method: "get",
-                    url: SESSION_CHAT_URL,
+                    url: `https://zeal-ama.herokuapp.com/session/${session.id}/chat`,
                 });
                 dispatch({
                     type: "SET_SESSION_CHATS",

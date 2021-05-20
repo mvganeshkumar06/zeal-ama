@@ -4,13 +4,7 @@ import { SessionContext } from "./SessionContext";
 import { StateType } from "../types/index";
 import { io } from "socket.io-client";
 
-let SOCKET_URL = "https://zeal-ama.herokuapp.com";
-
-if (process.env.NODE_ENV === "development") {
-    SOCKET_URL = "http://localhost:5000";
-}
-
-const socket = io(SOCKET_URL);
+const socket = io("https://zeal-ama.herokuapp.com");
 
 export const initialState: StateType = {
     session: {

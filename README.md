@@ -4,27 +4,6 @@
 
 A live streaming platform for doing AMA (Ask me anything) sessions.
 
-## Tech stack used
-
--   Frontend
-
-    -   React
-    -   React Hooks
-
--   Backend
-
-    -   Node
-    -   Express
-    -   Mongo DB
-
--   Real time communication
-
-    -   WebRTC
-    -   Socket io
-
--   Authentication
-    -   Auth0
-
 ## Features
 
 -   Host
@@ -46,3 +25,24 @@ A live streaming platform for doing AMA (Ask me anything) sessions.
 
 -   Public chat
     -   Everyone in the session can chat with others
+
+## Tech stack used
+
+-   Frontend
+
+    -   React
+    -   React Hooks
+
+-   Backend
+
+    -   Node
+    -   Express
+    -   Mongo DB
+
+-   Real time communication
+
+    -   WebRTC
+    -   Socket io
+
+-   Authentication
+    -   Auth0

@@ -113,12 +113,10 @@ const Chat = () => {
     const [message, setMessage] = useState("");
 
     useEffect(() => {
-        let SESSION_CHAT_URL: string;
+        let SESSION_CHAT_URL = `https://zeal-ama.herokuapp.com/session/${session.id}/chat`;
 
         if (process.env.NODE_ENV === "development") {
             SESSION_CHAT_URL = `http://localhost:5000/session/${session.id}/chat`;
-        } else {
-            SESSION_CHAT_URL = `https://zeal-ama.herokuapp.com/session/${session.id}/chat`;
         }
 
         const fetchSessionChatMessages = async () => {

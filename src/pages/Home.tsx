@@ -131,12 +131,10 @@ const Home = () => {
 
     const history = useHistory();
 
-    let SESSION_URL: string;
+    let SESSION_URL = "https://zeal-ama.herokuapp.com/session";
 
     if (process.env.NODE_ENV === "development") {
         SESSION_URL = "http://localhost:5000/session";
-    } else {
-        SESSION_URL = "https://zeal-ama.herokuapp.com/session";
     }
 
     const saveSessionDetailsOnDbAndRedirect = async (

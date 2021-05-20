@@ -69,13 +69,12 @@ const Session = () => {
     const [hostIdentified, setHostIdentified] = useState(false);
 
     useEffect(() => {
-        let CURRENT_SESSION_URL: string;
+        let CURRENT_SESSION_URL = `https://zeal-ama.herokuapp.com/session/${sessionId}`;
 
         if (process.env.NODE_ENV === "development") {
             CURRENT_SESSION_URL = `http://localhost:5000/session/${sessionId}`;
-        } else {
-            CURRENT_SESSION_URL = `https://zeal-ama.herokuapp.com/session/${sessionId}`;
         }
+
         const fetchSessionDetails = async () => {
             try {
                 const response = await axios({

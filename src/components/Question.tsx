@@ -218,12 +218,10 @@ const Question = ({ isHost }: QuestionPropType) => {
         useState(true);
 
     useEffect(() => {
-        let SESSION_QUESTION_URL: string;
+        let SESSION_QUESTION_URL = `https://zeal-ama.herokuapp.com/session/${session.id}/question`;
 
         if (process.env.NODE_ENV === "development") {
             SESSION_QUESTION_URL = `http://localhost:5000/session/${session.id}/question`;
-        } else {
-            SESSION_QUESTION_URL = `https://zeal-ama.herokuapp.com/session/${session.id}/question`;
         }
 
         const fetchSessionQuestions = async () => {

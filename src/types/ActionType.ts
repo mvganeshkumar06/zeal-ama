@@ -11,7 +11,7 @@ type ActionType =
               | "SET_QUESTION";
           payload: string;
       }
-    | { type: "SET_UNANSWERED_QUESTIONS"; payload: boolean }
+    | { type: "SET_UNANSWERED_QUESTIONS" | "SET_IS_HOST"; payload: boolean }
     | { type: "SET_SESSION"; payload: SessionType }
     | { type: "SET_SESSION_USERS"; payload: UserType[] }
     | { type: "SET_SESSION_CHATS"; payload: ChatType[] }

@@ -18,6 +18,7 @@ type StateType = {
     message: string;
     question: string;
     showUnansweredQuestions: boolean;
+    isHost: boolean;
     isLoading: {
         login: boolean;
         session: boolean;

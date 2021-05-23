@@ -9,6 +9,7 @@ import useSessionContext from "../hooks/useSessionContext";
 import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import CallEndIcon from "@material-ui/icons/CallEnd";
 import { useHistory } from "react-router-dom";
+import { UserType } from "../types";
 
 const User = () => {
     const { theme } = useThemeContext();
@@ -98,14 +99,14 @@ const User = () => {
                 });
             });
 
-            socket.on("user-joined-session", (users) => {
+            socket.on("user-joined-session", (users: UserType[]) => {
                 dispatch({
                     type: "SET_SESSION_USERS",
                     payload: users,
                 });
             });
 
-            socket.on("user-left-session", (users) => {
+            socket.on("user-left-session", (users: UserType[]) => {
                 dispatch({
                     type: "SET_SESSION_USERS",
                     payload: users,

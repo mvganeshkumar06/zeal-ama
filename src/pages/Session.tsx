@@ -6,10 +6,11 @@ import axios from "axios";
 import { Host, User } from "./index";
 import { Chat, Question } from "../components/index";
 import GroupIcon from "@material-ui/icons/Group";
+import { SessionType, SessionURLParamType } from "../types/index";
 
 const Session = () => {
     const styles = `
-        margin:5rem 1rem;
+        margin:5rem 0rem;
         
         .sessionName, .hostName{
             width:100%;
@@ -42,8 +43,7 @@ const Session = () => {
             margin-top:3rem;
         }
 
-        @media(min-width:768px){
-            margin:5rem 0rem;
+        @media(min-width:1024px){
             .sessionGrid{
                 grid-template-columns:1fr 1fr;
                 margin-top:5rem;
@@ -59,11 +59,7 @@ const Session = () => {
         dispatch,
     } = useSessionContext();
 
-    type SessionRouteParam = {
-        sessionId: string;
-    };
-
-    const { sessionId } = useParams<SessionRouteParam>();
+    const { sessionId } = useParams<SessionURLParamType>();
 
     const [isHost, setIsHost] = useState(false);
     const [hostIdentified, setHostIdentified] = useState(false);
@@ -71,15 +67,15 @@ const Session = () => {
     useEffect(() => {
         const fetchSessionDetails = async () => {
             try {
-                const response = await axios({
-                    method: "get",
-                    url: `https://zeal-ama.herokuapp.com/session/${sessionId}`,
-                });
+                const response = await axios.get<SessionType>(
+                    `https://zeal-ama.herokuapp.com/session/${sessionId}`
+                );
                 dispatch({
                     type: "SET_SESSION",
                     payload: response.data,
                 });
             } catch (error) {
+                console.log(error.response?.data || error.message);
                 dispatch({
                     type: "SET_IS_ERROR",
                     payload: { session: true },

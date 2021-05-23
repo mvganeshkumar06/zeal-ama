@@ -13,6 +13,7 @@ import MicIcon from "@material-ui/icons/Mic";
 import MicOffIcon from "@material-ui/icons/MicOff";
 import PlayArrowIcon from "@material-ui/icons/PlayArrow";
 import CallEndIcon from "@material-ui/icons/CallEnd";
+import { UserType } from "../types";
 
 const Host = () => {
     const { theme } = useThemeContext();
@@ -24,7 +25,7 @@ const Host = () => {
         .stream{
             border:1px solid ${theme === "light" ? "black" : "white"};
             border-radius:${style.common.borderRadius};
-            width:15rem;
+            width:18rem;
             height:fit-content;
             margin-bottom:2rem;
         }
@@ -101,14 +102,14 @@ const Host = () => {
                 socket.disconnect();
             });
 
-            socket.on("user-joined-session", (users) => {
+            socket.on("user-joined-session", (users: UserType[]) => {
                 dispatch({
                     type: "SET_SESSION_USERS",
                     payload: users,
                 });
             });
 
-            socket.on("user-left-session", (users) => {
+            socket.on("user-left-session", (users: UserType[]) => {
                 dispatch({
                     type: "SET_SESSION_USERS",
                     payload: users,

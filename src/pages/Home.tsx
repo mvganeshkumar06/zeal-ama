@@ -13,10 +13,11 @@ import {
 import { useHistory } from "react-router-dom";
 import VideoCallIcon from "@material-ui/icons/VideoCall";
 import { v4 as uuidv4 } from "uuid";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import useSessionContext from "../hooks/useSessionContext";
 import LiveTvIcon from "@material-ui/icons/LiveTv";
 import { useAuth0 } from "@auth0/auth0-react";
+import { SessionPostType } from "../types/index";
 
 const Home = () => {
     const style = useStyleContext();
@@ -137,20 +138,19 @@ const Home = () => {
         hostName: string
     ) => {
         try {
-            const response = await axios({
-                method: "post",
-                url: "https://zeal-ama.herokuapp.com/session",
-                data: {
-                    id: sessionId,
-                    name: sessionName,
-                    host: {
-                        name: hostName,
-                    },
+            const response = await axios.post<
+                SessionPostType,
+                AxiosResponse<string>
+            >("https://zeal-ama.herokuapp.com/session", {
+                id: sessionId,
+                name: sessionName,
+                host: {
+                    name: hostName,
                 },
             });
             history.push(`/join/${response.data}`);
         } catch (error) {
-            console.log(error);
+            console.log(error.response?.data || error.message);
         }
     };
 
@@ -202,7 +202,7 @@ const Home = () => {
                                 Hey <span className="userName">{userName}</span>
                             </Text>
                             <Text className="introText">
-                                Create your own session or join a live session !
+                                Create your own session or join a live session
                             </Text>
                             <Container
                                 type="col"
@@ -279,7 +279,7 @@ const Home = () => {
                     ) : (
                         <Text type="subHeading" color="orange">
                             Login to create your own session or to join a live
-                            session !
+                            session
                         </Text>
                     )}
                 </>

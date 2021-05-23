@@ -1,38 +1,32 @@
-import { useEffect, useState, FormEvent, KeyboardEvent } from "react";
+import { useEffect, FormEvent, KeyboardEvent } from "react";
 import {
     Container,
     Text,
     useStyleContext,
     useThemeContext,
     Button,
+    Divider,
 } from "@zeal-ui/core";
 import axios from "axios";
 import useSessionContext from "../hooks/useSessionContext";
 import SendIcon from "@material-ui/icons/Send";
 import { QuestionType } from "../types/index";
 import ArrowDropUpIcon from "@material-ui/icons/ArrowDropUp";
-import CheckOutlinedIcon from "@material-ui/icons/CheckOutlined";
-import PriorityHighOutlinedIcon from "@material-ui/icons/PriorityHighOutlined";
-import ClearIcon from "@material-ui/icons/Clear";
-
-type QuestionPropType = {
-    isHost: boolean;
-};
+import { QuestionPropType } from "../types/index";
 
 const Question = ({ isHost }: QuestionPropType) => {
     const style = useStyleContext();
     const { theme } = useThemeContext();
 
     const styles = `
-        width:15rem;
-        height:30rem;
-        margin:2rem 1rem;
-        padding:1rem 0.5rem;
+        width:18rem;
+        height:35rem;
+        margin:2rem 0rem;
         box-sizing:border-box;
         border-radius:${style.common.borderRadius};
         
         .questionTypeContainer{
-            margin-bottom:1rem;
+            margin:0.5rem 0rem;
         }
 
         .questionTypeBtn{
@@ -50,6 +44,11 @@ const Question = ({ isHost }: QuestionPropType) => {
             border:2px solid ${theme === "light" ? "black" : "white"};
         }
 
+        .questionDivider{
+            margin:0rem;
+            box-shadow:${style.common.boxShadow};
+        }
+
         .questionContainer{
             position:relative;
             width:100%;
@@ -59,22 +58,20 @@ const Question = ({ isHost }: QuestionPropType) => {
         .questionItem{
             position:relative;
             width:100%;
-            height:65%;
+            height:62%;
             overflow-y:auto;
             margin:0rem;
             word-wrap:break-word;
-            padding:0.25rem;
-            box-sizing:border-box;
         }
 
         .questionItemContainer{
             padding-left:0.5rem;
             box-sizing:border-box;
-            border-radius:${style.common.borderRadius};
-            margin:0.5rem 0rem;
+            margin:0.75rem 0rem;
             box-shadow:1px 1px 1px ${
                 theme === "light" ? style.colors.gray[3] : style.colors.gray[3]
             };
+            position:relative;
         }
 
         .question{
@@ -89,7 +86,6 @@ const Question = ({ isHost }: QuestionPropType) => {
 
         .creator, .question{
             margin:0rem;
-            font-size:0.85rem;
         }
 
         .creator{
@@ -103,7 +99,7 @@ const Question = ({ isHost }: QuestionPropType) => {
         }
 
         .questionInput{
-            width:88%;
+            width:100%;
             height:8rem;
             background-color:${
                 theme === "light" ? "white" : style.colors.gray[4]
@@ -111,6 +107,8 @@ const Question = ({ isHost }: QuestionPropType) => {
             color:${theme === "light" ? "black" : "white"};
             border:${style.common.border};
             border-radius:${style.common.borderRadius};
+            border-top-left-radius:0rem;
+            border-top-right-radius:0rem;
             padding:${style.common.padding};
             box-sizing:border-box;
             resize:none;
@@ -121,54 +119,54 @@ const Question = ({ isHost }: QuestionPropType) => {
         }
 
         .iconBg{
-            width:2.5rem;
-            height:2.5rem;
+            width:auto;
+            height:100%;
             background-color:${
                 theme === "light" ? style.colors.blue[2] : style.colors.blue[3]
             };
-            border-radius:50%;
             display:flex;
             justify-content:center;
             align-items:center;
-            margin-left:1rem;
+            position:absolute;
+            bottom:0rem;
+            right:0rem;
+            border-bottom-right-radius:${style.common.borderRadius};
         }
 
-        .iconBg:hover, .voteBg:hover, .markIcon:hover, .questionTypeBtn:hover{
+        .iconBg:hover, .voteBg:hover, .actionBtn:hover, .questionTypeBtn:hover{
             cursor:pointer;
             box-shadow:${style.common.boxShadow};
         }
 
-        .markIcon:hover{
-            cursor:pointer;
-        }
-
         .voteBg{
-            width:1.65rem;
-            height:2rem;
+            width:3.5rem;
+            height:3rem;
+            margin-right:0.5rem;
             background-color:${
-                theme === "light" ? style.colors.blue[2] : style.colors.blue[3]
+                theme === "light"
+                    ? style.colors.purple[2]
+                    : style.colors.purple[3]
             };
             border-radius:${style.common.borderRadius};
-            margin-left:1rem;
+            border-bottom-left-radius:0rem;
+            border-bottom-right-radius:0rem;
             position:relative;
-            border-top-left-radius:0rem;
-            border-top-right-radius:0rem;
         }
 
         .voteIcon{
+            position:absolute;
+            bottom:1.25rem;
             width:2rem;
             height:2rem;
             color:black;
-            position:absolute;
-            bottom:0.5rem;
         }
 
         .votesCount{
-            margin:0rem;
-            font-size:0.75rem;
-            color:black;
             position:absolute;
-            top:0.55rem;
+            top:1.25rem;
+            margin:0rem;
+            color:black;
+            font-size:0.75rem;
         }
 
         .sendQuestionIcon{
@@ -178,67 +176,112 @@ const Question = ({ isHost }: QuestionPropType) => {
             color:black;
         }
 
-        .markIcon{
-            width:1.5rem;
-            height:2rem;
-            margin-left:1rem;
-            background-color:${
-                theme === "light" ? style.colors.blue[2] : style.colors.blue[3]
-            };
-            color:black;
-            border-radius:${style.common.borderRadius};
-            border-top-left-radius:0rem;
-            border-top-right-radius:0rem;
+        .actionContainer{
+            margin-top:1.5rem;
         }
 
-        @media(min-width:425px){
-            width:20rem;
-            height:35rem;
+        .actionBtn{
+            padding:0rem 0.25rem;
+            margin:0rem 0.5rem;
+            font-size:0.65rem;
+            border-bottom-left-radius:0rem;
+            border-bottom-right-radius:0rem;
+        }
+
+        @media(min-width:375px){
+            width:90%;
+            
+            .questionItem{
+                height:67%;
+            }
+        }
+
+        @media(min-width:405px){
+            .voteBg{
+                width:3rem;
+                height:1.65rem;
+            }
+            
+            .voteIcon{
+                bottom:0.25rem;
+            }
+    
+            .votesCount{
+                top:0.45rem;
+            }
         }
 
         @media(min-width:768px){
-            margin:0rem; 
-            width:95%;
-            height:50rem;
+            height:40rem;
+            margin:5rem 0rem;
+
+            .questionItemContainer{
+                flex-direction:row;
+            }
+
+            .actionContainer{
+                position:absolute;
+                bottom:60%;
+                right:0rem;
+            }
+
+            .voteBg{
+                width:3rem;
+                height:1.5rem;
+                border-radius:${style.common.borderRadius};
+                border-top-left-radius:0rem;
+                border-top-right-radius:0rem;
+            }
+
+            .votesCount{
+                top:0.25rem;
+            }
+
+            .actionBtn{
+                margin-left:0.5rem;
+                border-radius:${style.common.borderRadius};
+                border-top-left-radius:0rem;
+                border-top-right-radius:0rem;
+            }
         }
 
         @media(min-width:1024px){
-            width:75%;
+            width:95%;
+            height:45rem;
+            margin:0rem;
         }
 
     `;
 
     const {
-        state: { isLoading, isError, session, socket, userName },
+        state: {
+            isLoading,
+            isError,
+            session,
+            socket,
+            userName,
+            question,
+            showUnansweredQuestions,
+        },
         dispatch,
     } = useSessionContext();
-
-    const [question, setQuestion] = useState("");
-    const [showUnansweredQuestions, setShowUnansweredQuestions] =
-        useState(true);
 
     useEffect(() => {
         const fetchSessionQuestions = async () => {
             try {
-                const response = await axios({
-                    method: "get",
-                    url: `https://zeal-ama.herokuapp.com/session/${session.id}/question`,
-                });
+                const response = await axios.get<QuestionType[]>(
+                    `https://zeal-ama.herokuapp.com/session/${session.id}/question`
+                );
                 dispatch({
                     type: "SET_SESSION_QUESTIONS",
                     payload: response.data,
                 });
             } catch (error) {
+                console.log(error.response?.data || error.message);
                 dispatch({
                     type: "SET_IS_ERROR",
                     payload: { sessionQuestion: true },
                 });
-                setTimeout(() => {
-                    dispatch({
-                        type: "SET_IS_ERROR",
-                        payload: { sessionQuestion: false },
-                    });
-                }, 6000);
             } finally {
                 dispatch({
                     type: "SET_IS_LOADING",
@@ -265,7 +308,7 @@ const Question = ({ isHost }: QuestionPropType) => {
 
     const sendQuestion = () => {
         socket.emit("question", userName, question);
-        setQuestion("");
+        dispatch({ type: "SET_QUESTION", payload: "" });
     };
 
     const upvoteQuestion = (question: QuestionType, userName: string) => {
@@ -333,7 +376,12 @@ const Question = ({ isHost }: QuestionPropType) => {
                         className={`questionTypeBtn ${
                             showUnansweredQuestions && "questionTypeBtnActive"
                         }`}
-                        onClick={() => setShowUnansweredQuestions(true)}
+                        onClick={() =>
+                            dispatch({
+                                type: "SET_UNANSWERED_QUESTIONS",
+                                payload: true,
+                            })
+                        }
                     >
                         Unanswered Questions
                     </Button>
@@ -341,17 +389,22 @@ const Question = ({ isHost }: QuestionPropType) => {
                         className={`questionTypeBtn ${
                             !showUnansweredQuestions && "questionTypeBtnActive"
                         }`}
-                        onClick={() => setShowUnansweredQuestions(false)}
+                        onClick={() =>
+                            dispatch({
+                                type: "SET_UNANSWERED_QUESTIONS",
+                                payload: false,
+                            })
+                        }
                     >
                         Answered Questions
                     </Button>
                 </Container>
+                <Divider className="questionDivider" />
                 {!isLoading.sessionQuestion && !isError.sessionQuestion && (
                     <Container type="col" rowCenter className="questionItem">
                         {questionsToDisplay.map((question: QuestionType) => (
                             <Container
-                                type="row"
-                                rowBetween
+                                type="col"
                                 withBorder
                                 width="100%"
                                 key={question._id}
@@ -369,10 +422,59 @@ const Question = ({ isHost }: QuestionPropType) => {
                                         {question.title}
                                     </Text>
                                 </Container>
-                                <abbr title="Upvote question">
+                                {isHost ? (
                                     <Container
-                                        type="col"
+                                        type="row"
                                         rowCenter
+                                        colCenter
+                                        className="actionContainer"
+                                    >
+                                        <Container
+                                            type="col"
+                                            rowCenter
+                                            colCenter
+                                            className="voteBg"
+                                            onClick={() =>
+                                                upvoteQuestion(
+                                                    question,
+                                                    userName
+                                                )
+                                            }
+                                        >
+                                            <ArrowDropUpIcon className="voteIcon" />
+                                            <Text className="votesCount" bold>
+                                                {question.upvotes.count}
+                                            </Text>
+                                        </Container>
+                                        <Button
+                                            color="green"
+                                            className="actionBtn"
+                                            onClick={() =>
+                                                markAnswered(question)
+                                            }
+                                        >
+                                            Mark answered
+                                        </Button>
+                                        <Button
+                                            color="orange"
+                                            className="actionBtn"
+                                            onClick={() =>
+                                                markUnanswered(question)
+                                            }
+                                        >
+                                            Mark unanswered
+                                        </Button>
+                                        <Button
+                                            color="red"
+                                            className="actionBtn"
+                                            onClick={() => markSpam(question)}
+                                        >
+                                            Mark spam
+                                        </Button>
+                                    </Container>
+                                ) : (
+                                    <Container
+                                        type="row"
                                         colCenter
                                         className="voteBg"
                                         onClick={() =>
@@ -384,34 +486,6 @@ const Question = ({ isHost }: QuestionPropType) => {
                                             {question.upvotes.count}
                                         </Text>
                                     </Container>
-                                </abbr>
-                                {isHost && (
-                                    <>
-                                        <abbr title="Mark as answered">
-                                            <CheckOutlinedIcon
-                                                className="markIcon"
-                                                onClick={() =>
-                                                    markAnswered(question)
-                                                }
-                                            />
-                                        </abbr>
-                                        <abbr title="Mark as unanswered">
-                                            <PriorityHighOutlinedIcon
-                                                className="markIcon"
-                                                onClick={() =>
-                                                    markUnanswered(question)
-                                                }
-                                            />
-                                        </abbr>
-                                        <abbr title="Mark as spam">
-                                            <ClearIcon
-                                                className="markIcon"
-                                                onClick={() =>
-                                                    markSpam(question)
-                                                }
-                                            />
-                                        </abbr>
-                                    </>
                                 )}
                             </Container>
                         ))}
@@ -419,8 +493,6 @@ const Question = ({ isHost }: QuestionPropType) => {
                 )}
                 <Container
                     type="row"
-                    rowCenter
-                    colCenter
                     width="100%"
                     className="questionInputContainer"
                 >
@@ -429,7 +501,10 @@ const Question = ({ isHost }: QuestionPropType) => {
                         placeholder="Enter your questions"
                         value={question}
                         onChange={(event: FormEvent<HTMLTextAreaElement>) =>
-                            setQuestion(event.currentTarget.value)
+                            dispatch({
+                                type: "SET_QUESTION",
+                                payload: event.currentTarget.value,
+                            })
                         }
                         onKeyPress={(event: KeyboardEvent) => {
                             if (event.key === "Enter") {

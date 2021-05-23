@@ -1,4 +1,4 @@
-import { useEffect, useState, FormEvent, KeyboardEvent } from "react";
+import { useEffect, FormEvent, KeyboardEvent } from "react";
 import {
     Container,
     Text,
@@ -17,15 +17,14 @@ const Chat = () => {
 
     const styles = `
         margin:5rem 1rem 2rem 1rem;
-        padding:1rem 0.5rem;
         box-sizing:border-box;
-        width:15rem;
+        width:18rem;
         height:20rem;
         border-radius:${style.common.borderRadius};
-     
+        border-bottom:0rem;
+
         .title{
-            margin:0rem;
-            margin-bottom:1rem;
+            margin:0.5rem 0rem;
         }
 
         .chatContainer{
@@ -37,10 +36,13 @@ const Chat = () => {
         .chatItem{
             position:relative;
             width:100%;
-            height:65%;
+            height:75%;
             overflow-y:auto;
             margin:0rem;
+            padding:0rem 0.5rem;
+            box-sizing:border-box;
             word-wrap:break-word;
+            border-top:${style.common.border};
         }
 
         .chat{
@@ -62,23 +64,26 @@ const Chat = () => {
             left:0rem;
             bottom:0rem;
             width:100%;
+            margin:0rem;
         }
 
         .chatInput{
-            width:80%;
+            width:100%;
+            margin:0rem;
+            border-radius:0rem;
+            border-bottom-left-radius:${style.common.borderRadius};
         }
 
         .iconBg{
-            width:2.5rem;
-            height:2.5rem;
+            width:2.25rem;
+            height:2.25rem;
             background-color:${
                 theme === "light" ? style.colors.blue[2] : style.colors.blue[3]
             };
-            border-radius:50%;
             display:flex;
             justify-content:center;
             align-items:center;
-            margin-left:1rem;
+            border-bottom-right-radius:${style.common.borderRadius};
         }
 
         .iconBg:hover{
@@ -106,34 +111,26 @@ const Chat = () => {
     `;
 
     const {
-        state: { isLoading, isError, session, socket, userName },
+        state: { isLoading, isError, session, socket, userName, message },
         dispatch,
     } = useSessionContext();
-
-    const [message, setMessage] = useState("");
 
     useEffect(() => {
         const fetchSessionChatMessages = async () => {
             try {
-                const response = await axios({
-                    method: "get",
-                    url: `https://zeal-ama.herokuapp.com/session/${session.id}/chat`,
-                });
+                const response = await axios.get<ChatType[]>(
+                    `https://zeal-ama.herokuapp.com/session/${session.id}/chat`
+                );
                 dispatch({
                     type: "SET_SESSION_CHATS",
                     payload: response.data,
                 });
             } catch (error) {
+                console.log(error.response?.data.errorMessage || error.message);
                 dispatch({
                     type: "SET_IS_ERROR",
                     payload: { sessionChat: true },
                 });
-                setTimeout(() => {
-                    dispatch({
-                        type: "SET_IS_ERROR",
-                        payload: { sessionChat: false },
-                    });
-                }, 6000);
             } finally {
                 dispatch({
                     type: "SET_IS_LOADING",
@@ -160,7 +157,10 @@ const Chat = () => {
 
     const sendMessage = () => {
         socket.emit("chat-message", userName, message);
-        setMessage("");
+        dispatch({
+            type: "SET_MESSAGE",
+            payload: "",
+        });
     };
 
     return (
@@ -197,7 +197,10 @@ const Chat = () => {
                         placeholder="Enter your message"
                         value={message}
                         onChange={(event: FormEvent<HTMLInputElement>) =>
-                            setMessage(event.currentTarget.value)
+                            dispatch({
+                                type: "SET_MESSAGE",
+                                payload: event.currentTarget.value,
+                            })
                         }
                         onKeyPress={(event: KeyboardEvent) => {
                             if (event.key === "Enter") {

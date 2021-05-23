@@ -7,10 +7,11 @@ type ActionType =
               | "SET_SESSION_ID"
               | "SET_SESSION_NAME"
               | "SET_USER_SOCKET_ID"
-              | "ADD_PARTICIPANT"
-              | "REMOVE_PARTICIPANT";
+              | "SET_MESSAGE"
+              | "SET_QUESTION";
           payload: string;
       }
+    | { type: "SET_UNANSWERED_QUESTIONS"; payload: boolean }
     | { type: "SET_SESSION"; payload: SessionType }
     | { type: "SET_SESSION_USERS"; payload: UserType[] }
     | { type: "SET_SESSION_CHATS"; payload: ChatType[] }

@@ -15,6 +15,9 @@ type StateType = {
     userName: string;
     userSocketId: string;
     socket: Socket<DefaultEventsMap, DefaultEventsMap>;
+    message: string;
+    question: string;
+    showUnansweredQuestions: boolean;
     isLoading: {
         login: boolean;
         session: boolean;

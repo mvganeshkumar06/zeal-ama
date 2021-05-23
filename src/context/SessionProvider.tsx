@@ -22,6 +22,9 @@ export const initialState: StateType = {
     userSocketId: "",
     hostStream: undefined,
     socket: socket,
+    message: "",
+    question: "",
+    showUnansweredQuestions: true,
     isLoading: {
         login: false,
         session: true,

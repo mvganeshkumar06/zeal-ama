@@ -47,6 +47,22 @@ const reducer = (state: StateType, action: ActionType): StateType => {
                 ...state,
                 session: { ...state.session, questions: action.payload },
             };
+        case "SET_MESSAGE":
+            return {
+                ...state,
+                message: action.payload,
+            };
+        case "SET_QUESTION":
+            return {
+                ...state,
+                question: action.payload,
+            };
+        case "SET_UNANSWERED_QUESTIONS": {
+            return {
+                ...state,
+                showUnansweredQuestions: action.payload,
+            };
+        }
         case "SET_IS_LOADING":
             return {
                 ...state,

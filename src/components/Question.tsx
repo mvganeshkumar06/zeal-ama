@@ -80,12 +80,9 @@ const Question = ({ isHost }: QuestionPropType) => {
             word-wrap:break-word;
         }
 
-        .title{
-            font-size:1rem;
-        }
-
-        .creator, .question{
+        .creator, .title{
             margin:0rem;
+            font-size:0.85rem;
         }
 
         .creator{
@@ -249,6 +246,10 @@ const Question = ({ isHost }: QuestionPropType) => {
             width:95%;
             height:45rem;
             margin:0rem;
+
+            .title{
+                font-size:1rem;
+            }
         }
 
     `;

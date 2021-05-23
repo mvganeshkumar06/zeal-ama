@@ -106,6 +106,10 @@ const Chat = () => {
         @media(min-width:768px){
             width:25rem;
             height:21.5rem;
+
+            .message{
+                font-size:1rem;
+            }
         }
 
     `;

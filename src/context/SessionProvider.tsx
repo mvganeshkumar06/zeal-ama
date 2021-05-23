@@ -25,6 +25,7 @@ export const initialState: StateType = {
     message: "",
     question: "",
     showUnansweredQuestions: true,
+    isHost: false,
     isLoading: {
         login: false,
         session: true,

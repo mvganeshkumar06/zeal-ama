@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Grid, Container, Text, Spinner, Alert } from "@zeal-ui/core";
 import useSessionContext from "../hooks/useSessionContext";
 import { useParams } from "react-router-dom";
@@ -55,14 +55,11 @@ const Session = () => {
     `;
 
     const {
-        state: { session, isLoading, isError },
+        state: { session, isHost, isLoading, isError },
         dispatch,
     } = useSessionContext();
 
     const { sessionId } = useParams<SessionURLParamType>();
-
-    const [isHost, setIsHost] = useState(false);
-    const [hostIdentified, setHostIdentified] = useState(false);
 
     useEffect(() => {
         const fetchSessionDetails = async () => {
@@ -95,11 +92,10 @@ const Session = () => {
         if (!isLoading.session && session) {
             const savedUserName = localStorage.getItem("userName");
             if (savedUserName === session.host.name) {
-                setIsHost(true);
+                dispatch({ type: "SET_IS_HOST", payload: true });
             }
-            setHostIdentified(true);
         }
-    }, [isLoading.session, session]);
+    }, [isLoading.session, session, dispatch]);
 
     return (
         <Container type="col" customStyles={styles}>
@@ -111,7 +107,7 @@ const Session = () => {
                     </Alert>
                 )}
             </Container>
-            {!isLoading.session && !isError.session && hostIdentified && (
+            {!isLoading.session && !isError.session && (
                 <>
                     <Container type="col" rowCenter width="100%">
                         <Text type="mainHeading" className="sessionName">

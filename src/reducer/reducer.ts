@@ -63,6 +63,12 @@ const reducer = (state: StateType, action: ActionType): StateType => {
                 showUnansweredQuestions: action.payload,
             };
         }
+        case "SET_IS_HOST": {
+            return {
+                ...state,
+                isHost: action.payload,
+            };
+        }
         case "SET_IS_LOADING":
             return {
                 ...state,
